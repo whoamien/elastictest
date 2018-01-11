@@ -40,7 +40,7 @@ public class RsvpDev {
 		String sourceIndex = args[2];
 		String targetIndex = args[3];
 
-		HttpClientConfig clientConfig = new HttpClientConfig.Builder(sourceUrl).multiThreaded(true).build();
+		HttpClientConfig clientConfig = new HttpClientConfig.Builder(sourceUrl).readTimeout(6000000).multiThreaded(true).build();
 		JestClientFactory factory = new JestClientFactory();
 		factory.setHttpClientConfig(clientConfig);
 		final JestClient jestClient = factory.getObject();
@@ -52,8 +52,7 @@ public class RsvpDev {
 
 		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 		searchSourceBuilder.query();
-		Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(sourceIndex).addType("profile")
-				.build();
+		Search search = new Search.Builder(searchSourceBuilder.toString()).addIndex(sourceIndex).build();
 		try {
 			SearchResult result = jestClient.execute(search);
 			long total = result.getJsonObject().getAsJsonObject("hits").get("total").getAsLong();
@@ -71,7 +70,7 @@ public class RsvpDev {
 				searchSourceBuilder.size(size);
 				searchSourceBuilder.query();
 
-				search = new Search.Builder(searchSourceBuilder.toString()).addIndex(sourceIndex).addType("profile")
+				search = new Search.Builder(searchSourceBuilder.toString()).addIndex(sourceIndex)
 						.build();
 				result = jestClient.execute(search);
 				hits = result.getHits(Map.class);
@@ -82,7 +81,7 @@ public class RsvpDev {
 					final Map source = (Map) hit.source;
 
 					String id = (String) source.get(JestResult.ES_METADATA_ID);
-					Index index = new Index.Builder(source).id(id).build();
+					Index index = new Index.Builder(source).type(hit.type).id(id).build();
 					indexList.add(index);
 
 					/*
@@ -99,7 +98,7 @@ public class RsvpDev {
 
 				}
 
-				Bulk bulk = new Bulk.Builder().defaultIndex(targetIndex).defaultType("profile").addAction(indexList)
+				Bulk bulk = new Bulk.Builder().defaultIndex(targetIndex).addAction(indexList)
 						.build();
 
 				/*
